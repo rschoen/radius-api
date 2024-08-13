@@ -1,13 +1,10 @@
 import express, { Express, Request, Response } from "express";
-import axios, { AxiosResponse, AxiosRequestConfig, RawAxiosRequestHeaders } from 'axios';
+import { PORT } from './globalConstants';
 
-const dotenv = require('dotenv');
 const apiKeyIsValid = require('./api_key')
-dotenv.config();
+const nearbyVenues = require('./venue_search')
 
 const app = express();
-const PORT = process.env.PORT || 3491;
-const API_KEY = process.env.API_KEY || "";
 
 app.get('^/status', (req: Request, res: Response) => {
     const status = {
@@ -39,6 +36,18 @@ app.get('^/nearby?', async (req: Request, res: Response) => {
         return
      }
 
+     var maxAgeInDays = 7
+     if("max_age" in query) {
+        const re = RegExp("^[1-7]$")
+        if(query["max_age"] == undefined || !re.test(query["max_age"]!.toString())) {
+            error["Error"] = "Invalid max_age parameter."
+            res.send(error)
+            return
+        }
+
+        maxAgeInDays = Number.parseInt(query["max_age"]!.toString())
+    }
+
      const lat = parseFloat(query["latitude"]!.toString())
      const lng = parseFloat(query["longitude"]!.toString())
      if(Number.isNaN(lat) || Number.isNaN(lng)) {
@@ -47,61 +56,15 @@ app.get('^/nearby?', async (req: Request, res: Response) => {
         return
      }
 
-     
+     return res.send(await nearbyVenues(lat, lng, maxAgeInDays))
 
-     console.log(req.query)
-
-     res.send(error);
 });
 
 app.listen(PORT, () => {
     console.log(`[server]: Server is running at http://localhost:${PORT}`);
   });
 
-
-async function requestData() {
-    return
-    try {
-        const Venue = await require('./models/Venue')
-        const data = await axios.post('https://places.googleapis.com/v1/places:searchNearby', {
-            locationRestriction: {
-                circle: {
-                center: {
-            latitude: 37.7937,
-            longitude: -122.3965
-                },
-                radius: 500.0,
-            }
-            },
-            // optional parameters
-            includedTypes: ['restaurant', 'bar'],
-            maxResultCount: 3,
-            rankPreference: 'DISTANCE',
-        }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Goog-Api-Key': API_KEY,
-                'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.userRatingCount,places.rating,places.googleMapsUri'
-            }
-        })
-
-        for(var i: number = 0; i < data.data.places.length; i++) {
-            const venue = data.data.places[i]
-            Venue.create( {
-                id: venue.id,
-                name: venue.displayName.text,
-                rating: venue.rating,
-                reviews: venue.userRatingCount,
-                latitude: venue.location.latitude,
-                longitude: venue.location.longitude,
-            })
-        }
-    } catch(error) {
-        console.log(error);
-    }
-}
-
-requestData();
+/*
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function keepSleeping() {
@@ -110,5 +73,5 @@ async function keepSleeping() {
     }
 }
 
-keepSleeping()
+keepSleeping()*/
 

@@ -7,13 +7,13 @@ const Query = sequelize.define('Query', {
     autoIncrement: true,
     primaryKey: true,
   },
-  timePerformed: DataTypes.DATE,
+  timePerformed: DataTypes.INTEGER,
   latitude: DataTypes.DOUBLE,
   longitude: DataTypes.DOUBLE,
   radius: DataTypes.DOUBLE,
   parentQuery: DataTypes.INTEGER
 });
 
-Query.sync()
+Query.sync({force: true})
 
 module.exports = Query
