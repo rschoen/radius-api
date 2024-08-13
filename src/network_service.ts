@@ -4,7 +4,7 @@ import { VENUES_PER_QUERY } from './globalConstants';
 const API_URL = 'https://places.googleapis.com/v1/places:searchNearby'
 const API_KEY = process.env.API_KEY || "";
 
-const Venue = require("./models/Venue")
+const {Venue} = require("./models/QueryVenue")
 
 async function downloadNearbyVenues(latitude: number, longitude: number) {
     try {

@@ -2,29 +2,39 @@ import { Sequelize, DataTypes } from 'sequelize';
 
 const sequelize = require('../databaseConnection')
 
-const Venue = require('./Venue')
-const Query = require('./Query')
-const QueryVenue = sequelize.define('QueryVenue', {
-  venue_id: {
-    type: DataTypes.STRING,
-    references: {
-      model: Venue,
-      key: 'id'
-    },
-  },
-  query_id: {
+const Query = sequelize.define('Query', {
+  id: {
     type: DataTypes.INTEGER,
-    references: {
-      model: Query,
-      key: 'id'
-    },
+    autoIncrement: true,
+    primaryKey: true,
   },
+  timePerformed: DataTypes.INTEGER,
+  latitude: DataTypes.DOUBLE,
+  longitude: DataTypes.DOUBLE,
+  radius: DataTypes.DOUBLE,
+  parentQuery: DataTypes.INTEGER
+});
+const Venue = sequelize.define('Venue', {
+  id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+  },
+  name: DataTypes.STRING,
+  rating: DataTypes.DOUBLE,
+  reviews: DataTypes.INTEGER,
+  latitude: DataTypes.DOUBLE,
+  longitude: DataTypes.DOUBLE,
+  imageUrl: DataTypes.STRING,
+  timeLastUpdated: DataTypes.DATE
 });
 
-Venue.hasMany(QueryVenue)
-Query.hasMany(QueryVenue)
 
-QueryVenue.sync()
+Query.belongsToMany(Venue, { through: 'QueryVenue' });
+Venue.belongsToMany(Query, { through: 'QueryVenue' });
 
+Query.sync({force: true})
+Venue.sync({force: true})
+sequelize.sync()
 
-module.exports = QueryVenue
+exports.Query = Query
+exports.Venue = Venue

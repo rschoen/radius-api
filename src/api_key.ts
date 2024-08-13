@@ -12,7 +12,6 @@ async function apiKeyIsValid(key: string): Promise<boolean> {
             apiKey: key
         }
     })
-    console.log(typeof user)
     if(user === null) {
         return false
     }
