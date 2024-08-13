@@ -4,8 +4,9 @@
   "description": "API to more easily access the new Places API",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon server.ts",
-    "start": "node server.js"
+    "dev": "ts-node-dev src/server.ts",
+    "start": "node dist/server.js",
+    "bootstrap": "node dist/bootstrap.js"
   },
   "repository": {
     "type": "git",

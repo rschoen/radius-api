@@ -10,7 +10,8 @@ const Query = sequelize.define('Query', {
   timePerformed: DataTypes.DATE,
   latitude: DataTypes.DOUBLE,
   longitude: DataTypes.DOUBLE,
-  radius: DataTypes.DOUBLE
+  radius: DataTypes.DOUBLE,
+  parentQuery: DataTypes.INTEGER
 });
 
 Query.sync()

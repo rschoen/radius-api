@@ -2,6 +2,7 @@ import express, { Express, Request, Response } from "express";
 import axios, { AxiosResponse, AxiosRequestConfig, RawAxiosRequestHeaders } from 'axios';
 
 const dotenv = require('dotenv');
+const apiKeyIsValid = require('./api_key')
 dotenv.config();
 
 const app = express();
@@ -15,11 +16,51 @@ app.get('^/status', (req: Request, res: Response) => {
      res.send(status);
 });
 
-/*app.listen(PORT, () => {
-    console.log(`[server]: Server is running at http://localhost:${port}`);
-  });*/
+app.get('^/nearby?', async (req: Request, res: Response) => {
+     var error = {
+        "Error": ""
+     };
+     const query = req.query
+
+     if(!("key" in query) || query["key"] == undefined || query["key"] == "") {
+        error["Error"] = "Parameter 'key' is required."
+        res.send(error)
+        return
+     }
+     if(! await apiKeyIsValid(query["key"]!.toString())) {
+        error["Error"] = "API key is invalid."
+        res.send(error)
+        return
+     }
+
+     if(!("latitude" in query) || !("longitude" in query) || query["latitude"] == undefined || query["longitude"] == undefined) {
+        error["Error"] = "Both 'latitude' and 'longitude' parameters are required."
+        res.send(error)
+        return
+     }
+
+     const lat = parseFloat(query["latitude"]!.toString())
+     const lng = parseFloat(query["longitude"]!.toString())
+     if(Number.isNaN(lat) || Number.isNaN(lng)) {
+        error["Error"] = "Both 'latitude' and 'longitude' must be a floating-point number."
+        res.send(error)
+        return
+     }
+
+     
+
+     console.log(req.query)
+
+     res.send(error);
+});
+
+app.listen(PORT, () => {
+    console.log(`[server]: Server is running at http://localhost:${PORT}`);
+  });
+
 
 async function requestData() {
+    return
     try {
         const Venue = await require('./models/Venue')
         const data = await axios.post('https://places.googleapis.com/v1/places:searchNearby', {
@@ -61,3 +102,13 @@ async function requestData() {
 }
 
 requestData();
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function keepSleeping() {
+    while(true) {
+        await sleep(2000)
+    }
+}
+
+keepSleeping()
+
