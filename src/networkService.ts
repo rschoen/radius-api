@@ -3,37 +3,39 @@ import { VENUES_PER_QUERY } from './globalConstants';
 
 const API_URL = 'https://places.googleapis.com/v1/places:searchNearby'
 const API_KEY = process.env.API_KEY || "";
+const HEADERS = {
+    'Content-Type': 'application/json',
+    'X-Goog-Api-Key': API_KEY,
+    'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.userRatingCount,places.rating,places.googleMapsUri'
+}
+const VENUE_TYPES = ['restaurant', 'bar']
 
-const {Venue} = require("./models/QueryVenue")
+const { Venue } = require("./models/QueryVenue")
 
 async function downloadNearbyVenues(latitude: number, longitude: number) {
     try {
         const data = await axios.post(API_URL, {
             locationRestriction: {
                 circle: {
-                center: {
-            latitude: latitude,
-            longitude: longitude
-                },
-                radius: 50000.0,
-            }
+                    center: {
+                        latitude: latitude,
+                        longitude: longitude
+                    },
+                    radius: 50000.0,
+                }
             },
             // optional parameters
-            includedTypes: ['restaurant', 'bar'],
+            includedTypes: VENUE_TYPES,
             maxResultCount: VENUES_PER_QUERY,
             rankPreference: 'DISTANCE',
         }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Goog-Api-Key': API_KEY,
-                'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.userRatingCount,places.rating,places.googleMapsUri'
-            }
+            headers: HEADERS
         })
         var venues = []
-        for(var i: number = 0; i < data.data.places.length; i++) {
+        for (var i: number = 0; i < data.data.places.length; i++) {
             const venue = data.data.places[i]
             venues.push(
-                await Venue.create( {
+                await Venue.create({
                     id: venue.id,
                     name: venue.displayName.text,
                     rating: venue.rating,
@@ -44,7 +46,7 @@ async function downloadNearbyVenues(latitude: number, longitude: number) {
             )
         }
         return venues
-    } catch(error) {
+    } catch (error) {
         console.log(error);
     }
 }

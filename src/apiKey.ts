@@ -1,7 +1,8 @@
-
 const User = require('./models/User')
 
 async function apiKeyIsValid(key: string): Promise<boolean> {
+    
+    
     const regexp = new RegExp('^[0-9a-zA-z=-]+$')
     if(!regexp.test(key)) {
         return false

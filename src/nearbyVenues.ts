@@ -1,15 +1,15 @@
 const {Query, Venue} = require("./models/QueryVenue")
 const sequelize = require("./databaseConnection")
-const downloadNearbyVenues = require("./network_service")
+const downloadNearbyVenues = require("./networkService")
 
 
-import { METERS_IN_DEGREE } from './globalConstants';
+import { METERS_IN_DEGREE, MAX_VENUES_RETURNED } from './globalConstants';
 
 async function nearbyVenues(latitude: number, longitude: number, maxAgeInDays: number) {
     const venues = await fetchNearbyVenuesFromDatabase(latitude, longitude, maxAgeInDays)
-    /*if(venues.length < MAX_VENUES_RETURNED) {
-        queueNextVenueSearch()
-    }*/
+    if(venues.length < MAX_VENUES_RETURNED) {
+        //queueNextVenueSearch()
+    }
    return venues
 }
 
