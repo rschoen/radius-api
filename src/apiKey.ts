@@ -1,11 +1,11 @@
-const User = require('./models/User')
+const {User} = require("./models/User")
 
-async function apiKeyIsValid(key: string): Promise<boolean> {
+export default async function validateAPIKey(key: string): Promise<number> {
     
     
     const regexp = new RegExp('^[0-9a-zA-z=-]+$')
     if(!regexp.test(key)) {
-        return false
+        return -1
     }
 
     const user = await User.findOne({
@@ -14,10 +14,8 @@ async function apiKeyIsValid(key: string): Promise<boolean> {
         }
     })
     if(user === null) {
-        return false
+        return -1
     }
 
-    return true
+    return user.id
 }
-
-module.exports = apiKeyIsValid

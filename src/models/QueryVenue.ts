@@ -12,7 +12,8 @@ export const Query = sequelize.define('Query', {
   latitude: DataTypes.DOUBLE,
   longitude: DataTypes.DOUBLE,
   radius: DataTypes.DOUBLE,
-  parentQuery: DataTypes.UUID
+  parentQuery: DataTypes.UUID,
+  user: DataTypes.INTEGER,
 });
 export const Venue = sequelize.define('Venue', {
   id: {

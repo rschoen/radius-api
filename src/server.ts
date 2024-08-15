@@ -1,9 +1,10 @@
 import express, { Express, Request, Response } from "express";
 import { PORT, METERS_PER_NAUTICAL_MILE } from './globalConstants';
+import { incrementUserQueries } from "./userManagement";
 
 
-const apiKeyIsValid = require('./apiKey')
-const {nearbyVenues} = require('./nearbyVenues')
+import validateAPIKey from "./apiKey"
+const {fetchNearbyVenues} = require('./nearbyVenues')
 //const {circleIntersections} = require('./geomath')
 
 const MINIMUM_EXPIRATION_DAYS = 1
@@ -30,7 +31,9 @@ app.get('^/nearby?', async (req: Request, res: Response) => {
         res.send(error)
         return
     }
-    if (! await apiKeyIsValid(query["key"]!.toString())) {
+
+    const userId = await validateAPIKey(query["key"]!.toString())
+    if (userId < 0) {
         error["Error"] = "API key is invalid."
         res.send(error)
         return
@@ -66,7 +69,8 @@ app.get('^/nearby?', async (req: Request, res: Response) => {
         }
     }
 
-    return res.send(await nearbyVenues(lat, lng, maxAgeInDays))
+    await incrementUserQueries(userId)
+    return res.send(await fetchNearbyVenues(lat, lng, maxAgeInDays, userId))
 
 });
 

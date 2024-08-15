@@ -1,7 +1,7 @@
-import { Sequelize, DataTypes } from 'sequelize';
+import {DataTypes } from 'sequelize';
 
 const { sequelize } = require('../databaseConnection')
-const User = sequelize.define('User', {
+export const User = sequelize.define('User', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -9,11 +9,22 @@ const User = sequelize.define('User', {
   },
   email: DataTypes.STRING,
   apiKey: DataTypes.STRING,
-  queries: DataTypes.INTEGER,
-  externalQueries: DataTypes.INTEGER
+  queries: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  },
+  externalQueries: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  },
+  externalQueriesThisHour: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  },
+  hourOfLastExternalQuery: DataTypes.STRING,
 });
 
 User.sync()
-
-
-module.exports = User

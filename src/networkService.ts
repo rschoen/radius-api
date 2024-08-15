@@ -1,5 +1,6 @@
 import axios, { AxiosResponse, AxiosRequestConfig, RawAxiosRequestHeaders } from 'axios';
 import { VENUES_PER_QUERY } from './globalConstants';
+import { checkAndUpdateRateLimit, incrementUserExternalQueries } from './userManagement';
 
 const API_URL = 'https://places.googleapis.com/v1/places:searchNearby'
 const API_KEY = process.env.API_KEY || "";
@@ -10,9 +11,16 @@ const HEADERS = {
 }
 const VENUE_TYPES = ['restaurant', 'bar']
 
-const { Venue } = require("./models/QueryVenue")
+import { Venue }  from "./models/QueryVenue"
 
-async function downloadNearbyVenues(latitude: number, longitude: number) {
+export async function fetchNearbyVenuesFromNetwork(latitude: number, longitude: number, forUser: number) {
+    console.log("Going to the API")
+    if(!await checkAndUpdateRateLimit(forUser)) {
+        console.log("User over API limit for the hour. Aborting.")
+        return []
+    } else {
+        await incrementUserExternalQueries(forUser)
+    }
     try {
         const data = await axios.post(API_URL, {
             locationRestriction: {
@@ -52,5 +60,3 @@ async function downloadNearbyVenues(latitude: number, longitude: number) {
         console.log(error);
     }
 }
-
-module.exports = downloadNearbyVenues

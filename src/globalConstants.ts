@@ -9,3 +9,4 @@ export const METERS_PER_NAUTICAL_MILE = 1852
 export const PORT = process.env.PORT || 3491;
 export const DELAY_BETWEEN_QUERIES = 1 * 1000
 export const DELAY_NOISE = 1 * 1000
+export const MAX_API_CALLS_PER_HOUR = 300

@@ -4,7 +4,7 @@ const sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: 'database.sqlite',
     logging: false,
-    logQueryParameters: false,
+    logQueryParameters: true,
   });
 
 
