@@ -6,7 +6,7 @@ const API_KEY = process.env.API_KEY || "";
 const HEADERS = {
     'Content-Type': 'application/json',
     'X-Goog-Api-Key': API_KEY,
-    'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.userRatingCount,places.rating,places.googleMapsUri'
+    'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.userRatingCount,places.rating,places.googleMapsUri,places.types,places.priceLevel'
 }
 const VENUE_TYPES = ['restaurant', 'bar']
 
@@ -41,6 +41,8 @@ async function downloadNearbyVenues(latitude: number, longitude: number) {
                 reviews: venue.userRatingCount,
                 latitude: venue.location.latitude,
                 longitude: venue.location.longitude,
+                categories: venue.types.toString(),
+                priceLevel: venue.priceLevel
             })
             //console.log(insertedVenue[0])
             venues.push(insertedVenue[0])
