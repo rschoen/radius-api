@@ -96,7 +96,6 @@ async function findOrCreateQuery(latitude: number, longitude: number, maxAgeInDa
 
     } else {
         console.log("Returning cached queries")
-        queueNextVenueSearchIfNeeded(query[0].id, latitude, longitude, forUser)
         return query[0].id
     }
 }
