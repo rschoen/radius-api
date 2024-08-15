@@ -1,8 +1,9 @@
 import express, { Express, Request, Response } from "express";
-import { PORT } from './globalConstants';
+import { PORT, METERS_PER_NAUTICAL_MILE } from './globalConstants';
+
 
 const apiKeyIsValid = require('./apiKey')
-const nearbyVenues = require('./nearbyVenues')
+const {nearbyVenues, circleIntersections} = require('./nearbyVenues')
 
 const MINIMUM_EXPIRATION_DAYS = 1
 const MAXIMUM_EXPIRATION_DAYS = 90
@@ -72,3 +73,5 @@ app.listen(PORT, () => {
     console.log(`[server]: Server is running at http://localhost:${PORT}`);
 });
 
+//console.log(circleIntersections(37.765339, -122.428383, 1000, 37.766140, -122.432730, 1000))
+console.log(circleIntersections(37.673442, -90.234036, 107.5 * METERS_PER_NAUTICAL_MILE, 36.109997, -90.953669, 145 * METERS_PER_NAUTICAL_MILE))

@@ -34,16 +34,16 @@ async function downloadNearbyVenues(latitude: number, longitude: number) {
         var venues = []
         for (var i: number = 0; i < data.data.places.length; i++) {
             const venue = data.data.places[i]
-            venues.push(
-                await Venue.create({
-                    id: venue.id,
-                    name: venue.displayName.text,
-                    rating: venue.rating,
-                    reviews: venue.userRatingCount,
-                    latitude: venue.location.latitude,
-                    longitude: venue.location.longitude,
-                })
-            )
+            const insertedVenue = await Venue.upsert({
+                id: venue.id,
+                name: venue.displayName.text,
+                rating: venue.rating,
+                reviews: venue.userRatingCount,
+                latitude: venue.location.latitude,
+                longitude: venue.location.longitude,
+            })
+            //console.log(insertedVenue[0])
+            venues.push(insertedVenue[0])
         }
         return venues
     } catch (error) {

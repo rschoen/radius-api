@@ -1,6 +1,6 @@
 import { Sequelize, DataTypes } from 'sequelize';
 
-const sequelize = require('../databaseConnection')
+const { sequelize } = require('../databaseConnection')
 const User = sequelize.define('User', {
   email: DataTypes.STRING,
   apiKey: DataTypes.STRING,

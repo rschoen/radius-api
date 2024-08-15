@@ -1,6 +1,6 @@
-import { Sequelize, DataTypes } from 'sequelize';
+import { DataTypes } from 'sequelize';
 
-const sequelize = require('../databaseConnection')
+const { sequelize } = require('../databaseConnection')
 
 const Query = sequelize.define('Query', {
   id: {
@@ -28,13 +28,17 @@ const Venue = sequelize.define('Venue', {
   timeLastUpdated: DataTypes.DATE
 });
 
+const QueryVenue = sequelize.define('QueryVenue', {
+});
 
-Query.belongsToMany(Venue, { through: 'QueryVenue' });
-Venue.belongsToMany(Query, { through: 'QueryVenue' });
 
-Query.sync({force: true})
-Venue.sync({force: true})
+Query.belongsToMany(Venue, { through: QueryVenue });
+Venue.belongsToMany(Query, { through: QueryVenue });
+
+Query.sync()
+Venue.sync()
 sequelize.sync()
 
 exports.Query = Query
 exports.Venue = Venue
+exports.QueryVenue = QueryVenue

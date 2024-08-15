@@ -2,8 +2,10 @@ import { Sequelize } from "sequelize";
 
 const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: 'database.sqlite'
+    storage: 'database.sqlite',
+    logging: false,
+    logQueryParameters: false,
   });
 
 
-module.exports = sequelize
+exports.sequelize = sequelize
