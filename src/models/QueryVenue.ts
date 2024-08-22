@@ -14,6 +14,14 @@ export const Query = sequelize.define('Query', {
   radius: DataTypes.DOUBLE,
   parentQuery: DataTypes.UUID,
   user: DataTypes.INTEGER,
+  pagesFetched: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
+  nextPageToken: {
+    type: DataTypes.STRING,
+    defaultValue: ""
+  },
 });
 export const Venue = sequelize.define('Venue', {
   id: {
@@ -32,12 +40,11 @@ export const Venue = sequelize.define('Venue', {
 });
 
 export const QueryVenue = sequelize.define('QueryVenue', {
+  distance: DataTypes.DOUBLE,
 });
 
 
 Query.belongsToMany(Venue, { through: QueryVenue });
 Venue.belongsToMany(Query, { through: QueryVenue });
 
-Query.sync()
-Venue.sync()
 sequelize.sync()

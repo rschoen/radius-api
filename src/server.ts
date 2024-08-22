@@ -4,7 +4,7 @@ import { incrementUserQueries } from "./userManagement";
 
 
 import validateAPIKey from "./apiKey"
-const {fetchNearbyVenues} = require('./nearbyVenues')
+const {fetchNearbyVenues, fetchPagedResults} = require('./nearbyVenues')
 //const {circleIntersections} = require('./geomath')
 
 const MINIMUM_EXPIRATION_DAYS = 1
@@ -21,56 +21,44 @@ app.get('^/status', (req: Request, res: Response) => {
 });
 
 app.get('^/nearby?', async (req: Request, res: Response) => {
-    var error = {
-        "Error": ""
-    };
-    const query = req.query
+    
 
-    if (!("key" in query) || query["key"] == undefined || query["key"] == "") {
-        error["Error"] = "Parameter 'key' is required."
+    const [userId, lat, lng, maxAgeInDays, errorString] = await checkAllRequestValues(req)
+    if(errorString != "") {
+        var error = {
+            "Error": errorString
+        };
         res.send(error)
         return
     }
 
-    const userId = await validateAPIKey(query["key"]!.toString())
-    if (userId < 0) {
-        error["Error"] = "API key is invalid."
+    await incrementUserQueries(userId)
+    return res.send(await fetchNearbyVenues(lat, lng, maxAgeInDays, userId))
+
+});
+
+app.get('^/pagedResults?', async (req: Request, res: Response) => {
+    const [userId, lat, lng, maxAgeInDays, errorString] = await checkAllRequestValues(req)
+    if(errorString != "") {
+        var error = {
+            "Error": errorString
+        };
         res.send(error)
         return
     }
 
-    if (!("latitude" in query) || !("longitude" in query) || query["latitude"] == undefined || query["longitude"] == undefined) {
-        error["Error"] = "Both 'latitude' and 'longitude' parameters are required."
-        res.send(error)
-        return
-    }
-    const lat = parseFloat(query["latitude"]!.toString())
-    const lng = parseFloat(query["longitude"]!.toString())
-    if (Number.isNaN(lat) || Number.isNaN(lng)) {
-        error["Error"] = "Both 'latitude' and 'longitude' must be a floating-point number."
-        res.send(error)
-        return
-    }
-
-    var maxAgeInDays = DEFAULT_EXPIRATION_DAYS
-    if ("max_age" in query) {
-        const re = RegExp("^[0-9]+$")
-        if (query["max_age"] == undefined || !re.test(query["max_age"]!.toString())) {
-            error["Error"] = "Invalid max_age parameter."
-            res.send(error)
-            return
-        }
-
-        maxAgeInDays = Number.parseInt(query["max_age"]!.toString())
-        if(maxAgeInDays > MAXIMUM_EXPIRATION_DAYS || maxAgeInDays < MINIMUM_EXPIRATION_DAYS) {
-            error["Error"] = `Parameter 'max_age' must be between ${MINIMUM_EXPIRATION_DAYS} and ${MAXIMUM_EXPIRATION_DAYS}.`
+    var pageToken = ""
+    if("nextPageToken" in req.query) {
+        pageToken = await checkNextPageToken(req)
+        if(pageToken == "") {
+            var error = {"Error": "Invalid nextPageToken parameter."};
             res.send(error)
             return
         }
     }
 
     await incrementUserQueries(userId)
-    return res.send(await fetchNearbyVenues(lat, lng, maxAgeInDays, userId))
+    return res.send(await fetchPagedResults(lat, lng, maxAgeInDays, userId, pageToken))
 
 });
 
@@ -80,3 +68,75 @@ app.listen(PORT, () => {
 
 //console.log(circleIntersections(37.765339, -122.428383, 1000, 37.766140, -122.432730, 1000))
 //console.log(circleIntersections(37.673442, -90.234036, 107.5 * METERS_PER_NAUTICAL_MILE, 36.109997, -90.953669, 145 * METERS_PER_NAUTICAL_MILE))
+
+async function checkQueryApiKey(req: Request): Promise<number> {
+    const query = req.query
+    if (!("key" in query) || query["key"] == undefined || query["key"] == "") {
+        return -1
+    }
+
+    return await validateAPIKey(query["key"]!.toString())
+}
+
+async function checkQueryLatLng(req: Request): Promise<[number, number]> {
+    const query = req.query
+    if (!("latitude" in query) || !("longitude" in query) || query["latitude"] == undefined || query["longitude"] == undefined) {
+        return [NaN, NaN]
+    }
+    const lat = parseFloat(query["latitude"]!.toString())
+    const lng = parseFloat(query["longitude"]!.toString())
+    return [lat, lng]
+}
+
+async function checkQueryMaxAge(req: Request): Promise<number> {
+    const query = req.query
+    const re = RegExp("^[0-9]+$")
+    if (query["max_age"] == undefined || !re.test(query["max_age"]!.toString())) {
+        return -1
+    }
+
+    const maxAgeInDays = Number.parseInt(query["max_age"]!.toString())
+    if(maxAgeInDays > MAXIMUM_EXPIRATION_DAYS || maxAgeInDays < MINIMUM_EXPIRATION_DAYS) {
+        return -1
+    }
+
+    return maxAgeInDays
+}
+
+async function checkNextPageToken(req: Request): Promise<string> {
+    const query = req.query
+    if(!("nextPageToken" in query)) {
+        return ""
+    }
+    return query["nextPageToken"]?.toString() ?? ""
+}
+
+async function checkAllRequestValues(req: Request): Promise<[number, number, number, number, string]> {
+    const userId = await checkQueryApiKey(req)
+
+    if (userId < 0) {
+        return errorArray("API key is invalid.")
+    }
+
+    const [lat, lng] = await checkQueryLatLng(req)
+
+    if (Number.isNaN(lat) || Number.isNaN(lng)) {
+
+        return errorArray("Both 'latitude' and 'longitude' must be a floating-point number.")
+    }
+
+    var maxAgeInDays = DEFAULT_EXPIRATION_DAYS
+    if ("max_age" in req.query) {
+        maxAgeInDays = await checkQueryMaxAge(req)
+        if (maxAgeInDays < 0) {
+            return errorArray("Invalid max_age parameter.")
+        }
+    }
+
+    return [userId, lat, lng, maxAgeInDays, ""]
+
+}
+
+function errorArray(error: string): [number, number, number, number, string] {
+    return [-1, -1, -1, -1, error]
+}
