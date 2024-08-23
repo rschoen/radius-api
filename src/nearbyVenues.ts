@@ -54,7 +54,7 @@ export async function fetchPagedResults(latitude: number, longitude: number, max
 
     var venues = []
     do {
-        TODO: performNextVenueSearch(queryId, latitude, longitude, forUser)
+        await performNextVenueSearch(queryId, latitude, longitude, forUser)
 
         venues = await Venue.findAll( {
             attributes: ["id","name","rating","reviews","latitude","longitude","imageUrl","priceLevel","categories"],
@@ -155,9 +155,8 @@ async function performNextVenueSearch(queryId: string, originalLat: number, orig
     const [latitude, longitude] = await calculateNextSearchCenter(queryId, originalLat, originalLng)
     console.log(`Performing next search at ${latitude}, ${longitude}`)
     if(latitude != null && longitude != null) {
-        //version without queuing up
         const venues = await fetchNearbyVenuesFromNetwork(latitude, longitude, forUser);
-        await insertQueryRecordInDatabase(latitude,longitude,originalLat, originalLng, venues, forUser, queryId, false);
+        await insertQueryRecordInDatabase(latitude,longitude,originalLat, originalLng, venues, forUser, queryId, queueNextSearch);
     }
 }
 

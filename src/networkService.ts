@@ -14,7 +14,6 @@ const VENUE_TYPES = ['restaurant', 'bar']
 import { Venue }  from "./models/QueryVenue"
 
 export async function fetchNearbyVenuesFromNetwork(latitude: number, longitude: number, forUser: number) {
-    console.log("Going to the API")
     if(!await checkAndUpdateRateLimit(forUser)) {
         console.log("User over API limit for the hour. Aborting.")
         return []
