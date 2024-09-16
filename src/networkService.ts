@@ -7,7 +7,7 @@ const API_KEY = process.env.API_KEY || "";
 const HEADERS = {
     'Content-Type': 'application/json',
     'X-Goog-Api-Key': API_KEY,
-    'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.userRatingCount,places.rating,places.googleMapsUri,places.types,places.priceLevel'
+    'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.userRatingCount,places.rating,places.googleMapsUri,places.types,places.priceLevel,places.photos'
 }
 const VENUE_TYPES = ['restaurant', 'bar']
 
@@ -41,6 +41,10 @@ export async function fetchNearbyVenuesFromNetwork(latitude: number, longitude: 
         var venues = []
         for (var i: number = 0; i < data.data.places.length; i++) {
             const venue = data.data.places[i]
+	var imageUrl = ""
+	    if(venue.photos != undefined && venue.photos.length > 0) {
+		    imageUrl = photoUrlFromPhotoName(venue.photos[0].name)
+	    }
             const insertedVenue = await Venue.upsert({
                 id: venue.id,
                 name: venue.displayName.text,
@@ -49,7 +53,8 @@ export async function fetchNearbyVenuesFromNetwork(latitude: number, longitude: 
                 latitude: venue.location.latitude,
                 longitude: venue.location.longitude,
                 categories: venue.types.toString(),
-                priceLevel: venue.priceLevel
+                priceLevel: venue.priceLevel,
+		imageUrl: imageUrl
             })
             //console.log(insertedVenue[0])
             venues.push(insertedVenue[0])
@@ -58,4 +63,9 @@ export async function fetchNearbyVenuesFromNetwork(latitude: number, longitude: 
     } catch (error) {
         console.log(error);
     }
+}
+
+
+function photoUrlFromPhotoName(name: string) {
+	return "https://places.googleapis.com/v1/" + name + "/media?key=API_KEY&max_width_px=200"
 }

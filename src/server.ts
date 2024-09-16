@@ -1,8 +1,8 @@
 import express, { Express, Request, Response } from "express";
 import { PORT, METERS_PER_NAUTICAL_MILE } from './globalConstants';
 import { incrementUserQueries } from "./userManagement";
-
-
+var https = require('https');
+var fs = require('fs');
 import validateAPIKey from "./apiKey"
 const {fetchNearbyVenues, fetchPagedResults} = require('./nearbyVenues')
 //const {circleIntersections} = require('./geomath')
@@ -10,6 +10,11 @@ const {fetchNearbyVenues, fetchPagedResults} = require('./nearbyVenues')
 const MINIMUM_EXPIRATION_DAYS = 1
 const MAXIMUM_EXPIRATION_DAYS = 90
 const DEFAULT_EXPIRATION_DAYS = 7
+
+var credentials = {
+	key: fs.readFileSync("/etc/letsencrypt/live/fellyeah.duckdns.org/privkey.pem"),
+	cert: fs.readFileSync("/etc/letsencrypt/live/fellyeah.duckdns.org/fullchain.pem")
+}
 
 const app = express();
 
@@ -62,7 +67,9 @@ app.get('^/pagedResults?', async (req: Request, res: Response) => {
 
 });
 
-app.listen(PORT, () => {
+
+var httpsServer = https.createServer(credentials, app)
+httpsServer.listen(PORT, () => {
     console.log(`[server]: Server is running at http://localhost:${PORT}`);
 });
 

@@ -10,7 +10,7 @@ import { randomUUID } from "crypto";
 const SAME_SPOT_THRESHOLD = geomath.metersToLatitudeDegrees(20)
 
 export async function fetchNearbyVenues(latitude: number, longitude: number, maxAgeInDays: number, forUser: number) {
-    const queryId = await findOrCreateQuery(latitude, longitude, maxAgeInDays, forUser)
+    const queryId = await findOrCreateQuery(latitude, longitude, maxAgeInDays, forUser, true)
 
     const venues = await Venue.findAll( {
         attributes: ["id","name","rating","reviews","latitude","longitude","imageUrl","priceLevel","categories"],
@@ -156,7 +156,12 @@ async function performNextVenueSearch(queryId: string, originalLat: number, orig
     console.log(`Performing next search at ${latitude}, ${longitude}`)
     if(latitude != null && longitude != null) {
         const venues = await fetchNearbyVenuesFromNetwork(latitude, longitude, forUser);
-        await insertQueryRecordInDatabase(latitude,longitude,originalLat, originalLng, venues, forUser, queryId, queueNextSearch);
+        if(venues == undefined) {
+		console.log("Venues was undefined.");
+	}
+	else {
+		await insertQueryRecordInDatabase(latitude,longitude,originalLat, originalLng, venues, forUser, queryId, queueNextSearch);
+	}
     }
 }
 
@@ -181,7 +186,7 @@ async function calculateNextSearchCenter(queryId: string, originalLat: number, o
     }
 }
 
-async function findOrCreateQuery(latitude: number, longitude: number, maxAgeInDays: number, forUser: number) {
+async function findOrCreateQuery(latitude: number, longitude: number, maxAgeInDays: number, forUser: number, queueNextSearch: boolean = false) {
     const earliestQueryTimestamp = Date.now() - maxAgeInDays * 24 * 60 * 60 * 1000
     const query = await sequelize.query(`SELECT id FROM Queries WHERE ABS(latitude - ${latitude}) < ${SAME_SPOT_THRESHOLD} AND ABS(longitude - ${longitude}) < ${SAME_SPOT_THRESHOLD} AND timePerformed > ${earliestQueryTimestamp} ORDER BY timePerformed DESC LIMIT 1`, {
         model: Query,
@@ -189,7 +194,7 @@ async function findOrCreateQuery(latitude: number, longitude: number, maxAgeInDa
     if(query.length < 1) {
         console.log("Fetching new queries")
         const venues = await fetchNearbyVenuesFromNetwork(latitude, longitude, forUser);
-        return await insertQueryRecordInDatabase(latitude,longitude, latitude, longitude, venues, forUser);
+        return await insertQueryRecordInDatabase(latitude,longitude, latitude, longitude, venues, forUser, "", queueNextSearch);
 
     } else {
         console.log("Returning cached queries")
