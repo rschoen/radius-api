@@ -38,7 +38,7 @@ app.get('^/nearby?', async (req: Request, res: Response) => {
     }
 
     await incrementUserQueries(userId)
-    return res.send(await fetchNearbyVenues(lat, lng, maxAgeInDays, userId))
+    return res.send(await fetchNearbyVenues(lat, lng, maxAgeInDays, userId, updatedSince))
 
 });
 

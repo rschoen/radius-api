@@ -14,11 +14,11 @@ export async function fetchNearbyVenues(latitude: number, longitude: number, max
 
     const venues = await Venue.findAll( {
         attributes: ["id","name","rating","reviews","latitude","longitude","imageUrl","priceLevel","categories","timeLastUpdated"],
+	where: { timeLastUpdated: { [Op.gt]: updatedAfter } },
         include: [{
             model: Query,
             required: true,
             attributes: [],
-            where: { updatedSince: { [Op.gt]: updatedAfter } },
             through: {
                 attributes: [],
                 where: { queryId: queryId }
