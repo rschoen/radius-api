@@ -28,7 +28,7 @@ app.get('^/status', (req: Request, res: Response) => {
 app.get('^/nearby?', async (req: Request, res: Response) => {
     
 
-    const [userId, lat, lng, maxAgeInDays, errorString] = await checkAllRequestValues(req)
+    const [userId, lat, lng, maxAgeInDays, updatedSince, errorString] = await checkAllRequestValues(req)
     if(errorString != "") {
         var error = {
             "Error": errorString
@@ -43,7 +43,7 @@ app.get('^/nearby?', async (req: Request, res: Response) => {
 });
 
 app.get('^/pagedResults?', async (req: Request, res: Response) => {
-    const [userId, lat, lng, maxAgeInDays, errorString] = await checkAllRequestValues(req)
+    const [userId, lat, lng, maxAgeInDays, _, errorString] = await checkAllRequestValues(req)
     if(errorString != "") {
         var error = {
             "Error": errorString
@@ -110,6 +110,16 @@ async function checkQueryMaxAge(req: Request): Promise<number> {
     return maxAgeInDays
 }
 
+async function checkQueryUpdatedSince(req: Request): Promise<number> {
+    const query = req.query
+    const re = RegExp("^[0-9]+$")
+    if (query["updated_since"] == undefined || !re.test(query["updated_since"]!.toString())) {
+        return -1
+    }
+
+    return Number.parseInt(query["updated_since"]!.toString())
+}
+
 async function checkNextPageToken(req: Request): Promise<string> {
     const query = req.query
     if(!("nextPageToken" in query)) {
@@ -118,7 +128,7 @@ async function checkNextPageToken(req: Request): Promise<string> {
     return query["nextPageToken"]?.toString() ?? ""
 }
 
-async function checkAllRequestValues(req: Request): Promise<[number, number, number, number, string]> {
+async function checkAllRequestValues(req: Request): Promise<[number, number, number, number, number, string]> {
     const userId = await checkQueryApiKey(req)
 
     if (userId < 0) {
@@ -140,10 +150,18 @@ async function checkAllRequestValues(req: Request): Promise<[number, number, num
         }
     }
 
-    return [userId, lat, lng, maxAgeInDays, ""]
+    var updatedSince = 0
+    if ("updated_since" in req.query) {
+        updatedSince = await checkQueryUpdatedSince(req)
+        if (updatedSince < 0) {
+            return errorArray("Invalid updated_since parameter.")
+        }
+    }
+
+    return [userId, lat, lng, maxAgeInDays, updatedSince, ""]
 
 }
 
-function errorArray(error: string): [number, number, number, number, string] {
-    return [-1, -1, -1, -1, error]
+function errorArray(error: string): [number, number, number, number, number, string] {
+    return [-1, -1, -1, -1, -1, error]
 }

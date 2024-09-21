@@ -36,7 +36,7 @@ export const Venue = sequelize.define('Venue', {
   imageUrl: DataTypes.STRING,
   priceLevel: DataTypes.STRING,
   categories: DataTypes.STRING,
-  timeLastUpdated: DataTypes.DATE
+  timeLastUpdated: DataTypes.INTEGER
 });
 
 export const QueryVenue = sequelize.define('QueryVenue', {

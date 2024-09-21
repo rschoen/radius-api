@@ -9,15 +9,16 @@ import { randomUUID } from "crypto";
 
 const SAME_SPOT_THRESHOLD = geomath.metersToLatitudeDegrees(20)
 
-export async function fetchNearbyVenues(latitude: number, longitude: number, maxAgeInDays: number, forUser: number) {
+export async function fetchNearbyVenues(latitude: number, longitude: number, maxAgeInDays: number, forUser: number, updatedAfter: number) {
     const queryId = await findOrCreateQuery(latitude, longitude, maxAgeInDays, forUser, true)
 
     const venues = await Venue.findAll( {
-        attributes: ["id","name","rating","reviews","latitude","longitude","imageUrl","priceLevel","categories"],
+        attributes: ["id","name","rating","reviews","latitude","longitude","imageUrl","priceLevel","categories","timeLastUpdated"],
         include: [{
             model: Query,
             required: true,
             attributes: [],
+            where: { updatedSince: { [Op.gt]: updatedAfter } },
             through: {
                 attributes: [],
                 where: { queryId: queryId }

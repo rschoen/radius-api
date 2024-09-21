@@ -54,6 +54,8 @@ export async function fetchNearbyVenuesFromNetwork(latitude: number, longitude: 
                 longitude: venue.location.longitude,
                 categories: venue.types.toString(),
                 priceLevel: venue.priceLevel,
+                timeLastUpdated: Date.now(),
+
 		imageUrl: imageUrl
             })
             //console.log(insertedVenue[0])
