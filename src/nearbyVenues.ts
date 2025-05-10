@@ -211,7 +211,7 @@ async function insertQueryRecordInDatabase(latitude: number, longitude: number, 
         timePerformed: Date.now(),
         latitude: latitude,
         longitude: longitude,
-        radius: maxVenueDistance(venues, homeLatitude, homeLongitude),
+        radius: maxVenueDistance(venues, latitude, longitude),
         parentQuery: parentQuery,
         user: forUser,
     });
@@ -224,6 +224,7 @@ async function insertQueryRecordInDatabase(latitude: number, longitude: number, 
        await QueryVenue.upsert( {
         VenueId: venues[i].id,
         QueryId: linkedQueryId,
+        originalQueryId: query.id,
         distance: geomath.cosineDistanceBetweenPoints(homeLatitude, homeLongitude, venues[i].latitude, venues[i].longitude)
        })
     }

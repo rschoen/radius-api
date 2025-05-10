@@ -41,6 +41,7 @@ export const Venue = sequelize.define('Venue', {
 
 export const QueryVenue = sequelize.define('QueryVenue', {
   distance: DataTypes.DOUBLE,
+  originalQueryId: DataTypes.UUID,
 });
 
 
