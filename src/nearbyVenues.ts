@@ -4,7 +4,7 @@ import { Op, UUID } from "sequelize";
 import { fetchNearbyVenuesFromNetwork } from "./networkService"
 import * as geomath from "./geomath"
 
-import { MAX_VENUES_RETURNED, DELAY_BETWEEN_QUERIES, DELAY_NOISE, VENUES_PER_PAGE } from './globalConstants';
+import { MAX_VENUES_RETURNED, DELAY_BETWEEN_QUERIES, DELAY_NOISE } from './globalConstants';
 import { randomUUID } from "crypto";
 
 const SAME_SPOT_THRESHOLD = geomath.metersToLatitudeDegrees(20)
@@ -38,7 +38,7 @@ export async function fetchNearbyVenues(latitude: number, longitude: number, max
    
 }
 
-export async function fetchPagedResults(latitude: number, longitude: number, maxAgeInDays: number, forUser: number, pageToken: string) {
+export async function fetchPagedResults(latitude: number, longitude: number, maxAgeInDays: number, forUser: number, pageToken: string, resultsPerPage: number) {
 
     const queryId = await findOrCreateQuery(latitude, longitude, maxAgeInDays, forUser)
 
@@ -50,7 +50,7 @@ export async function fetchPagedResults(latitude: number, longitude: number, max
         }
     }
 
-    const startingVenue = pagesFetched * VENUES_PER_PAGE
+    const startingVenue = pagesFetched * resultsPerPage
 
 
     var venues = []
@@ -71,9 +71,9 @@ export async function fetchPagedResults(latitude: number, longitude: number, max
             }],
             order: [[Query, QueryVenue, 'createdAt', 'ASC']] ,
             offset: startingVenue,
-            limit: VENUES_PER_PAGE,
+            limit: resultsPerPage,
         })
-    } while (venues.length < VENUES_PER_PAGE)
+    } while (venues.length < resultsPerPage)
 
     const newNextPageToken = randomUUID()
 

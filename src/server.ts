@@ -7,9 +7,13 @@ import validateAPIKey from "./apiKey"
 const {fetchNearbyVenues, fetchPagedResults} = require('./nearbyVenues')
 //const {circleIntersections} = require('./geomath')
 
-const MINIMUM_EXPIRATION_DAYS = 1
+const MINIMUM_EXPIRATION_DAYS = 0
 const MAXIMUM_EXPIRATION_DAYS = 90
 const DEFAULT_EXPIRATION_DAYS = 7
+
+const MINIMUM_RESULTS_PER_PAGE = 1
+const MAXIMUM_RESULTS_PER_PAGE = 100
+const DEFAULT_RESULTS_PER_PAGE = 20
 
 var credentials = {
 	key: fs.readFileSync("/etc/letsencrypt/live/fellyeah.duckdns.org/privkey.pem"),
@@ -62,8 +66,18 @@ app.get('^/pagedResults?', async (req: Request, res: Response) => {
         }
     }
 
+    var resultsPerPage = DEFAULT_RESULTS_PER_PAGE
+    if("resultsPerPage" in req.query) {
+        resultsPerPage = await checkResultsPerPage(req)
+        if(resultsPerPage < 0) {
+            var error = {"Error": "Invalid results_per_page parameter."};
+            res.send(error)
+            return
+        }
+    }
+
     await incrementUserQueries(userId)
-    return res.send(await fetchPagedResults(lat, lng, maxAgeInDays, userId, pageToken))
+    return res.send(await fetchPagedResults(lat, lng, maxAgeInDays, userId, pageToken, resultsPerPage))
 
 });
 
@@ -128,6 +142,20 @@ async function checkNextPageToken(req: Request): Promise<string> {
     return query["nextPageToken"]?.toString() ?? ""
 }
 
+async function checkResultsPerPage(req: Request): Promise<number> {
+    const query = req.query
+    const re = RegExp("^[0-9]+$")
+    if (query["results_per_page"] == undefined || !re.test(query["results_per_page"]!.toString())) {
+        return -1
+    }
+
+    const resultsPerPage = Number.parseInt(query["results_per_page"]!.toString())
+    if(resultsPerPage < MINIMUM_RESULTS_PER_PAGE || resultsPerPage > MAXIMUM_RESULTS_PER_PAGE) {
+        return -1
+    }
+
+    return resultsPerPage
+}
 async function checkAllRequestValues(req: Request): Promise<[number, number, number, number, number, string]> {
     const userId = await checkQueryApiKey(req)
 
