@@ -1,7 +1,7 @@
 const {Query, Venue, QueryVenue} = require("./models/QueryVenue")
 const {sequelize} = require("./databaseConnection")
 import { Op, UUID } from "sequelize";
-import { fetchNearbyVenuesFromNetwork } from "./networkService"
+import { fetchNearbyVenuesFromNetwork, RATE_LIMIT_REACHED } from "./networkService"
 import * as geomath from "./geomath"
 
 import { MAX_VENUES_RETURNED, DELAY_BETWEEN_QUERIES, DELAY_NOISE } from './globalConstants';
@@ -11,6 +11,10 @@ const SAME_SPOT_THRESHOLD = geomath.metersToLatitudeDegrees(20)
 
 export async function fetchNearbyVenues(latitude: number, longitude: number, maxAgeInDays: number, forUser: number, updatedAfter: number) {
     const queryId = await findOrCreateQuery(latitude, longitude, maxAgeInDays, forUser, true)
+
+    if(queryId === RATE_LIMIT_REACHED) {
+        return rateLimitedResponse()
+    }
 
     const venues = await Venue.findAll( {
         attributes: ["id","name","rating","reviews","latitude","longitude","imageUrl","priceLevel","categories","timeLastUpdated"],
@@ -42,6 +46,10 @@ export async function fetchPagedResults(latitude: number, longitude: number, max
 
     const queryId = await findOrCreateQuery(latitude, longitude, maxAgeInDays, forUser)
 
+    if(queryId === RATE_LIMIT_REACHED) {
+        return rateLimitedResponse()
+    }
+
     var [pagesFetched, nextPageToken] = await getPageDataForQuery(queryId)
 
     if(pagesFetched > 0) {
@@ -55,7 +63,10 @@ export async function fetchPagedResults(latitude: number, longitude: number, max
 
     var venues = []
     do {
-        await performNextVenueSearch(queryId, latitude, longitude, forUser)
+        const searchResult = await performNextVenueSearch(queryId, latitude, longitude, forUser)
+        if(searchResult === RATE_LIMIT_REACHED) {
+            return rateLimitedResponse()
+        }
 
         venues = await Venue.findAll( {
             attributes: ["id","name","rating","reviews","latitude","longitude","imageUrl","priceLevel","categories"],
@@ -157,7 +168,11 @@ async function performNextVenueSearch(queryId: string, originalLat: number, orig
     console.log(`Performing next search at ${latitude}, ${longitude}`)
     if(latitude != null && longitude != null) {
         const venues = await fetchNearbyVenuesFromNetwork(latitude, longitude, forUser);
-        if(venues == undefined) {
+	if(venues === RATE_LIMIT_REACHED) {
+		console.log("Rate limit reached. Stopping venue search.")
+		return RATE_LIMIT_REACHED
+	}
+	if(venues == undefined) {
 		console.log("Venues was undefined.");
 	}
 	else {
@@ -195,11 +210,24 @@ async function findOrCreateQuery(latitude: number, longitude: number, maxAgeInDa
     if(query.length < 1) {
         console.log("Fetching new queries")
         const venues = await fetchNearbyVenuesFromNetwork(latitude, longitude, forUser);
+        if(venues === RATE_LIMIT_REACHED) {
+            return RATE_LIMIT_REACHED
+        }
         return await insertQueryRecordInDatabase(latitude,longitude, latitude, longitude, venues, forUser, "", queueNextSearch);
 
     } else {
         console.log("Returning cached queries")
         return query[0].id
+    }
+}
+
+function rateLimitedResponse() {
+    return {
+        metadata: {
+            resultsComplete: false,
+            rateLimited: true,
+        },
+        venues: []
     }
 }
 
@@ -244,4 +272,3 @@ function maxVenueDistance(venues: typeof Venue, latitude: number, longitude: num
     }
     return maxDistance
 }
-

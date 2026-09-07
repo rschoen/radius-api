@@ -13,10 +13,12 @@ const VENUE_TYPES = ['restaurant', 'bar']
 
 import { Venue }  from "./models/QueryVenue"
 
+export const RATE_LIMIT_REACHED = Symbol("RATE_LIMIT_REACHED")
+
 export async function fetchNearbyVenuesFromNetwork(latitude: number, longitude: number, forUser: number) {
     if(!await checkAndUpdateRateLimit(forUser)) {
         console.log("User over API limit for the hour. Aborting.")
-        return []
+        return RATE_LIMIT_REACHED
     } else {
         await incrementUserExternalQueries(forUser)
     }
